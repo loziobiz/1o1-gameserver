@@ -8,7 +8,7 @@ function Room(id, name){
     this.id = id;
     this.players = [];
     this.tables = [];
-    this.nickName = name;
+    this.name = name;
 };
 
 Room.prototype.addPlayer = function(player) {

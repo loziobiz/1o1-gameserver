@@ -5,7 +5,7 @@
 'use strict';
 
 var events = require('events'),
-    EventConstants = require('./eventConstants'),
+    Const = require('./const'),
     _ = require('underscore'),
     UUIDGen = require('./uuidgen');
 
@@ -15,7 +15,7 @@ var Turn = function(table, round, isFirstTurn, previousWinnerIdx){
     this.table = table;
     this.roundId = round.id;
     this.round = round;
-    this.status = 'empty'; // VALUES: 'empty', 'idle', 'wait', 'ended'
+    this.status = Const.TurnStatus.EMPTY; // VALUES: 'empty', 'idle', 'wait', 'ended'
     this.cardsPlayed = []; // something like [ {playerId:id, cardPlayed:card, timestamp:time},... ]
     this.winnerId = undefined;
     this.playerToAct = undefined;
@@ -24,7 +24,7 @@ var Turn = function(table, round, isFirstTurn, previousWinnerIdx){
     this.isFirstTurn = isFirstTurn;
     this.previousWinnerIdx = previousWinnerIdx;
 
-    this.emit( EventConstants.TURN_READY, this.id );
+    this.emit( Const.Events.TURN_READY, this.id );
 }
 Turn.prototype.__proto__ = events.EventEmitter.prototype;
 
@@ -37,7 +37,7 @@ Turn.prototype.setStatus = function(newStatus){
     this.status = newStatus;
 
     switch (newStatus){
-        case 'draw_new_cards':
+        case Const.TurnStatus.DRAW_CARDS:
             var l = this.table.players.length,
                 index = 0;
 
@@ -52,13 +52,13 @@ Turn.prototype.setStatus = function(newStatus){
 
             break;
 
-        case 'idle':
-        case 'waiting':
+        case Const.TurnStatus.IDLE:
+        case Const.TurnStatus.WAITING:
             this.playerToAct = this.table.players[this.playingSequence[0]];
 
             break;
 
-        case 'ended':
+        case Const.TurnStatus.ENDED:
             this.winnerId = this.getWinnerId();
 
             console.log('[Turn] [Winner is] player ' + this.winnerId );
@@ -67,7 +67,7 @@ Turn.prototype.setStatus = function(newStatus){
     }
 
     _.delay(function(){
-        that.emit( EventConstants.TURN_CHANGE_STATUS, oldStatus, newStatus );
+        that.emit( Const.Events.TURN_CHANGE_STATUS, oldStatus, newStatus );
     }, 10);
 
 }
@@ -136,23 +136,23 @@ Turn.prototype.setCardPlayed = function(playerId, card){
     this.playingSequence.shift();
 
     if ( this.cardsPlayed.length > 0  && this.cardsPlayed.length < this.table.players.length ){
-        this.setStatus( 'waiting' );
+        this.setStatus( Const.TurnStatus.WAITING );
     }
 
     if (this.cardsPlayed.length === this.table.players.length ){
-        this.setStatus( 'ended' );
+        this.setStatus( Const.TurnStatus.ENDED );
     }
 }
 
 Turn.prototype.start = function(){
     this.playingSequence = this.getPlayingSequenceAsArray();
 
-    this.emit( 'TURN_STARTED', this );
+    this.emit( Const.Events.TURN_STARTED, this );
 
     if ( this.isFirstTurn || this.table.deck.length === 0 ){
-        this.setStatus( 'idle' );
+        this.setStatus( Const.TurnStatus.IDLE );
     } else {
-        this.setStatus( 'draw_new_cards' );
+        this.setStatus( Const.TurnStatus.DRAW_CARDS );
     }
 
 }

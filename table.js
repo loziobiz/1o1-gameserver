@@ -3,14 +3,14 @@
  */
 'use strict';
 
-var EventConstants = require('./eventConstants'),
+var Const = require('./const'),
     events = require('events');
 
 function Table(tableID){
     events.EventEmitter.call(this);
 
     this.id = tableID;
-    this.status = "available";
+    this.status = Const.TurnStatus.AVAILABLE;
     this.players = [];
     this.board = [];
     this.playerLimit = 2;
@@ -23,7 +23,7 @@ Table.prototype.changeStatus = function(newStatus){
     console.log( '[Table] [changeStatus] -> ' + newStatus );
     this.status = newStatus;
 
-    this.emit( EventConstants.TABLE_CHANGE_STATUS, newStatus );
+    this.emit( Const.Events.TABLE_CHANGE_STATUS, newStatus );
 }
 
 Table.prototype.playerJoin = function(player) {
@@ -38,9 +38,9 @@ Table.prototype.playerJoin = function(player) {
     nPlayers = this.players.length;
 
     if ( nPlayers > 0 && nPlayers < this.playerLimit ){
-        this.changeStatus( 'waiting' );
+        this.changeStatus( Const.TableStatus.WAITING );
     } else if ( nPlayers == this.playerLimit ){
-        this.changeStatus( 'playing' );
+        this.changeStatus( Const.TableStatus.PLAYING );
     }
 }
 

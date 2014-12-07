@@ -4,7 +4,7 @@
 'use strict';
 
 var Turn = require( './turn' ),
-    EventConstants = require('./eventConstants'),
+    Const = require('./const'),
     _ = require('underscore'),
     events = require('events'),
     UUIDGen = require('./uuidgen'),
@@ -49,7 +49,7 @@ function getCardById(cardsArray, cardId){
 }
 
 function onTableChangeStatus(newStatus){
-    if ( newStatus === 'playing' ){
+    if ( newStatus === Const.TableStatus.PLAYING ){
         start();
     }
 }
@@ -58,36 +58,36 @@ function onTurnChangeStatus(oldStatus, newStatus){
     var that = this;
 
     switch (newStatus){
-        case 'draw_new_cards':
+        case Const.TurnStatus.DRAW_CARDS:
             var i = this.table.players.length,
                 index = 0;
 
             console.log( '[Game] [ ' + table.deck.length + ' ] cards left in deck' );
 
             _.defer(function(){
-                eventDispatcher.emit( 'TURN_DRAW_CARDS', that.drawedCards );
+                eventDispatcher.emit( Const.Events.TURN_DRAW_CARDS, that.drawedCards );
             });
 
             _.delay(function(){
-                that.setStatus( 'idle' );
+                that.setStatus( Const.TurnStatus.IDLE );
             }, 100);
 
 
             break;
 
-        case 'idle':
-        case 'waiting':
+        case Const.TurnStatus.IDLE:
+        case Const.TurnStatus.WAITING:
             _.defer(function(){
-                eventDispatcher.emit( 'GAME_WAITING', that.playerToAct );
+                eventDispatcher.emit( Const.Events.GAME_WAITING, that.playerToAct );
             });
 
             break;
 
-        case 'ended':
-            this.removeAllListeners( EventConstants.TURN_CHANGE_STATUS );
+        case Const.TurnStatus.ENDED:
+            this.removeAllListeners( Const.Events.TURN_CHANGE_STATUS );
 
             _.defer(function(){
-                eventDispatcher.emit( 'TURN_ENDED', that.winnerId );
+                eventDispatcher.emit( Const.Events.TURN_ENDED, that.winnerId );
             });
 
             _.delay(function(){
@@ -103,12 +103,12 @@ function onTurnChangeStatus(oldStatus, newStatus){
 }
 
 function onTurnStarted(){
-    this.removeAllListeners( 'TURN_STARTED' );
+    this.removeAllListeners( Const.Events.TURN_STARTED );
 
     var that = this;
 
     _.defer(function(){
-        eventDispatcher.emit( 'TURN_STARTED', that.id );
+        eventDispatcher.emit( Const.Events.TURN_STARTED, that.id );
     });
 }
 
@@ -160,12 +160,12 @@ function endRound(round){
         if ( scores[key] >= config.targetScore ) targetScoreReached = true;
     });
 
-    eventDispatcher.emit( 'ROUND_ENDED', round );
+    eventDispatcher.emit( Const.Events.ROUND_ENDED, round );
 
     if ( !targetScoreReached ) {
         newRound();
     } else {
-        eventDispatcher.emit( 'GAME_ENDED' );
+        eventDispatcher.emit( Const.Events.GAME_ENDED );
     }
 }
 
@@ -182,8 +182,8 @@ function newTurn(round){
         lastWinnerIdx = ( lastWinnerId !== undefined ) ? table.getPlayerIndexById( lastWinnerId) : undefined,
         turn = new Turn( table, getLastRound(), isFirstTurn, lastWinnerIdx );
 
-    turn.on( EventConstants.TURN_CHANGE_STATUS, onTurnChangeStatus );
-    turn.on( 'TURN_STARTED', onTurnStarted );
+    turn.on( Const.Events.TURN_CHANGE_STATUS, onTurnChangeStatus );
+    turn.on( Const.Events.TURN_STARTED, onTurnStarted );
 
     _round.turns.push( turn );
 
@@ -224,7 +224,7 @@ function newRound(){
     rounds.push( round );
 
     _.defer(function(){
-        eventDispatcher.emit('NEW_ROUND', id);
+        eventDispatcher.emit( Const.Events.ROUND_NEW, id);
     });
 
 
@@ -249,12 +249,12 @@ function getDealerIdx() {
 
 function setTable(riftable){
     table = riftable;
-    table.on( EventConstants.TABLE_CHANGE_STATUS, onTableChangeStatus );
+    table.on( Const.Events.TABLE_CHANGE_STATUS, onTableChangeStatus );
 }
 
 function start(){
     console.log( '[Game] [start]' );
-    eventDispatcher.emit( 'game_started', id );
+    eventDispatcher.emit( Const.Events.GAME_STARTED, id );
 
     /*
     server.sendMsg( [hero, villain], "GameStart", {} );
@@ -315,11 +315,11 @@ function playCard( playerId, cardId ){
     if ( cardIsPlayable ) {
         currentTurn.setCardPlayed( playerId, playedCard );
         player.holeCards.splice( cardIndex, 1 )[0];
-        eventDispatcher.emit( 'CARD_PLAYED', playedCard ); //TODO: capire se è il caso di aspettare un evento da turn su cui triggerare questo
+        eventDispatcher.emit( Const.Events.CARD_PLAYED, playedCard ); //TODO: capire se è il caso di aspettare un evento da turn su cui triggerare questo
 
         return playedCard;
     } else {
-        eventDispatcher.emit( 'CARD_NOT_PLAYABLE', playedCard );
+        eventDispatcher.emit( Const.Events.CARD_NOT_PLAYABLE, playedCard );
 
         return false;
     }
