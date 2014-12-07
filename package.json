@@ -1,5 +1,5 @@
 {
-  "nickName": "1o1-gameserver",
+  "name": "1o1-gameserver",
   "version": "0.0.1",
   "private": true,
   "scripts": {
