@@ -15,6 +15,8 @@ var app = require('express')(),
         tresette: new Room('tresette', "Tresette")
     };
 
+app.set('port', (process.env.PORT || 5000));
+
 var table1 = new Table('001');
 var game1 = new Game( gamesConfig.tresette );
 
@@ -131,6 +133,6 @@ setInterval(function(){
 }, 2000);
 */
 
-http.listen(3000, function(){
+http.listen(app.get('port'), function(){
     console.log('listening on *:3000');
 });
