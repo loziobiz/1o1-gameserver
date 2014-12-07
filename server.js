@@ -6,10 +6,9 @@ var app = require('express')(),
     Room = require( './room'),
     Table = require( './table'),
     Game = require( './game' ),
-    Card = require( './card' ),
     Player = require( './player'),
-    ai = require( './ai'),
     _ = require('underscore'),
+    Const = require('./const'),
     gamesConfig = require( './gamesConfig'),
     rooms = {
         tresette: new Room('tresette', "Tresette")
@@ -40,38 +39,38 @@ io.on('connection', function(socket){
 
     //TODO: add room list dispatch
 
-    socket.on('playerConnectRequest', function(nickname, roomId){
+    socket.on(Const.ProtocolEvents.PLAYER_CONNECT_REQUEST, function(nickname, roomId){
         player = new Player();
         player.socketId = socket.id;
         player.nickName = nickname;
         rooms[roomId].addPlayer(player);
-        socket.emit( 'playerConnectResponse', {player: player} );
+        socket.emit( Const.ProtocolEvents.PLAYER_CONNECT_RESPONSE, {player: player} );
 
         console.log( 'player connected' );
     });
 
-    socket.on('playerJoinRequest', function(playerId){
+    socket.on(Const.ProtocolEvents.PLAYER_JOIN_REQUEST, function(playerId){
         socket.join( roomName );
         table1.playerJoin( player );
 
-        socket.emit( 'playerJoinResponse', {tableId: table1.id} );
-        socket.broadcast.to( roomName ).emit( 'notifyPlayerJoin', {tableId: table1.id} );
+        socket.emit( Const.ProtocolEvents.PLAYER_JOIN_RESPONSE, {tableId: table1.id} );
+        socket.broadcast.to( roomName ).emit( Const.ProtocolEvents.NOTIFY_PLAYER_JOIN, {tableId: table1.id} );
     });
 
-    socket.on('playerReadyToPlayRequest', function(playerId){
+    socket.on(Const.ProtocolEvents.PLAYER_READY_REQUEST, function(playerId){
         game1.setPlayerReady( playerId );
 
-        socket.emit( 'playerReadyToPlayResponse', {gameId: game1.id} );
-        socket.broadcast.to( roomName ).emit( 'notifyPlayerReadyToPlay', {gameId: game1.id, player: player} );
+        socket.emit( Const.ProtocolEvents.PLAYER_READY_RESPONSE, {gameId: game1.id} );
+        socket.broadcast.to( roomName ).emit( Const.ProtocolEvents.NOTIFY_PLAYER_READY, {gameId: game1.id, player: player} );
     });
 
-    socket.on('playCardRequest', function(playerId, cardId){
+    socket.on(Const.ProtocolEvents.PLAY_CARD_REQUEST, function(playerId, cardId){
         if ( game1.getPlayerToActId() ===  playerId ){
             var cardPlayed = game1.playCard( playerId, cardId );
 
             if ( cardPlayed ) {
-                socket.emit( 'playCardResponse', { cardId: cardId } );
-                socket.broadcast.to( roomName ).emit( 'notifyPlayCard', {gameId: game1.id, playerId: player.id, card: cardPlayed} );
+                socket.emit( Const.ProtocolEvents.PLAY_CARD_RESPONSE, { cardId: cardId } );
+                socket.broadcast.to( roomName ).emit( Const.ProtocolEvents.NOTIFY_PLAY_CARD, {gameId: game1.id, playerId: player.id, card: cardPlayed} );
             } else {
                 socket.emit( 'notifyError', { code: 1002, msg: 'Card is not playable' } );
             }
@@ -83,46 +82,46 @@ io.on('connection', function(socket){
     //TODO: handle disconnection
 });
 
-game1.eventDispatcher.on('game_started', function(gameId){
+game1.eventDispatcher.on(Const.Events.GAME_STARTED, function(gameId){
     console.log("started");
 
-    game1.eventDispatcher.removeAllListeners('game_started');
+    game1.eventDispatcher.removeAllListeners( Const.Events.GAME_STARTED );
 
     _.defer(function(){
-        io.to( roomName ).emit( 'notifyGameStarted', {gameId: gameId, players: table1.players} );
+        io.to( roomName ).emit( Const, {gameId: gameId, players: table1.players} );
     });
 });
 
-game1.eventDispatcher.on('NEW_ROUND', function(dealerId){
+game1.eventDispatcher.on(Const.Events.ROUND_NEW, function(dealerId){
     _.defer(function(){
         _.each(table1.players, function(element, index, list){
             //TODO: place dealer on client
-            io.to( element.socketId ).emit( 'notifyNewRound', { holecards: element.holeCards, dealerId: dealerId } );
+            io.to( element.socketId ).emit( Const.ProtocolEvents.NOTIFY_NEW_ROUND, { holecards: element.holeCards, dealerId: dealerId } );
         });
     });
 });
 
-game1.eventDispatcher.on( 'GAME_WAITING', function(player){
+game1.eventDispatcher.on( Const.Events.GAME_WAITING, function(player){
     _.defer(function(){
-        io.to( roomName ).emit( 'notifyWaitingForPlayerAction', {playerId: player.id} );
+        io.to( roomName ).emit( Const.Events.NOTIFY_WAIT_PLAYER_ACTION, {playerId: player.id} );
     });
 } );
 
-game1.eventDispatcher.on( 'TURN_ENDED', function(winnerId){
+game1.eventDispatcher.on( Const.Events.TURN_ENDED, function(winnerId){
     _.defer(function(){
-        io.to( roomName ).emit( 'notifyTurnEnded', {winnerId: winnerId} );
+        io.to( roomName ).emit( Const.ProtocolEvents.NOTIFY_TURN_ENDED, {winnerId: winnerId} );
     });
 } );
 
-game1.eventDispatcher.on( 'TURN_STARTED', function(turnId){
+game1.eventDispatcher.on( Const.Events.TURN_STARTED, function(turnId){
     _.defer(function(){
-        io.to( roomName ).emit( 'notifyTurnStarted', {turnId: turnId} );
+        io.to( roomName ).emit( Const.ProtocolEvents.NOTIFY_TURN_STARTED, {turnId: turnId} );
     });
 } );
 
-game1.eventDispatcher.on( 'TURN_DRAW_CARDS', function(drawedCards){
+game1.eventDispatcher.on( Const.Events.TURN_DRAW_CARDS, function(drawedCards){
     _.defer(function(){
-        io.to( roomName ).emit( 'notifyDrawCards', {drawedCards: drawedCards} );
+        io.to( roomName ).emit( Const.ProtocolEvents.NOTIFY_DRAW_CARDS, {drawedCards: drawedCards} );
     });
 } );
 

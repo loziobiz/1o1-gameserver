@@ -36,3 +36,24 @@ var TableStatus = {
     EMPTY: 'EMPTY'
 };
 exports.TableStatus = TableStatus;
+
+var ProtocolEvents = {
+    PLAYER_CONNECT_REQUEST: 'playerConnectRequest',
+    PLAYER_CONNECT_RESPONSE: 'playerConnectResponse',
+    PLAYER_JOIN_REQUEST: 'playerJoinRequest',
+    PLAYER_JOIN_RESPONSE: 'playerJoinResponse',
+    PLAYER_READY_REQUEST: 'playerReadyToPlayRequest',
+    PLAYER_READY_RESPONSE: 'playerReadyToPlayResponse',
+    PLAY_CARD_REQUEST: 'playCardRequest',
+    PLAY_CARD_RESPONSE: 'playCardResponse',
+    NOTIFY_PLAYER_JOIN: 'notifyPlayerJoin',
+    NOTIFY_PLAYER_READY: 'notifyPlayerReadyToPlay',
+    NOTIFY_PLAY_CARD: 'notifyPlayCard',
+    NOTIFY_ERROR: 'notifyError',
+    NOTIFY_NEW_ROUND: 'notifyNewRound',
+    NOTIFY_WAIT_PLAYER_ACTION: 'notifyWaitingForPlayerAction',
+    NOTIFY_TURN_ENDED: 'notifyTurnEnded',
+    NOTIFY_TURN_STARTED: 'notifyTurnStarted',
+    NOTIFY_DRAW_CARDS: 'notifyDrawCards'
+}
+exports.ProtocolEvents = ProtocolEvents;

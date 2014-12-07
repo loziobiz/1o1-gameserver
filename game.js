@@ -11,6 +11,7 @@ var Turn = require( './turn' ),
     ai = require('./ai'),
     deck = require('./deck');
 
+
 var id = UUIDGen.uuidFast();
 var config = {};
 var scores = {};
