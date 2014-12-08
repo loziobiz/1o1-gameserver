@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <link href="css/main.css" rel="stylesheet" type="text/css">
+    <script src="https://cdn.socket.io/socket.io-1.2.1.js"></script>
+    <script src="js/lib/jquery.js"></script>
+    <script src="js/lib/underscore-min.js"></script>
+
+</head>
+<body>
+
+<div class="page" id="loginPage">
+    Nickname: <input type="text" id="txtNickname" width="20">
+    <button id="btnConnect" class="btnConnect">CONNECT TO ROOM </button>
+</div>
+
+<div class="page" id="confirmAndJoinPage">
+    Welcome, <span id="confirmPlayerNick"></span>! You are connected with id <span id="confirmPlayerId"></span><BR>
+    <button class="btnJoin master">CLICK HERE TO JOIN TABLE </button>
+</div>
+
+<div class="page" id="joinOkWaiting">
+    Table <span id="confirmTableId"></span> joined. Waiting one more player to start a new game...
+</div>
+
+<div class="page" id="confimGameStart">
+    Game <span id="confirmGameStartId"></span> started.<BR>
+    Your opponent: <span id="confirmGameStartOppoNick"></span> is <span id="confirmGameStartOppoStatus"></span><BR><BR>
+    <button id="btnStartPlaying">CLICK HERE TO START PLAYING</button>
+</div>
+
+<div class="page" id="gamePage">
+    Game id: <span id="gameId"></span><BR>
+    <div class="card master" id="masterCard">
+        <p class="id">4s</p>
+    </div>
+
+    <div id="game">
+        <div id="villain" class="player villain plrid02">
+            <div class="cards"></div>
+            <div class="picks"></div>
+            <div class="clearLeft"></div>
+            <div class="nickname"><p>Villain</p></div>
+        </div>
+
+        <div id="board">
+            <div id="moves"></div>
+            <div id="deck"></div>
+        </div>
+
+        <div id="hero" class="player hero plrid01">
+            <div class="cards"></div>
+            <div class="picks"></div>
+            <div class="clearLeft"></div>
+            <div class="nickname"><p></p></div>
+        </div>
+    </div>
+</div>
+
+<div id="log"></div>
+
+<script src="js/tresette.js"></script>
+
+</body>
+</html>

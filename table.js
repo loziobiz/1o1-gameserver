@@ -4,24 +4,41 @@
 'use strict';
 
 var Const = require('./const'),
+    UUIDGen = require('./uuidgen'),
+    Game = require( './game' ),
     events = require('events');
 
-function Table(tableID){
+function Table(config, roomId){
     events.EventEmitter.call(this);
 
-    this.id = tableID;
+    this.id = UUIDGen.uuidFast();
+    this.config = config;
     this.status = Const.TurnStatus.AVAILABLE;
     this.players = [];
     this.board = [];
-    this.playerLimit = 2;
+    this.playerLimit = config.playerLimit;
     this.gameObj = undefined;
     this.deck = [];
+    this.roomId = roomId;
+    this.createGame();
 }
 Table.prototype.__proto__ = events.EventEmitter.prototype;
+
+Table.prototype.createGame = function(){
+    var game = new Game( this.config.gameConfig );
+    this.gameObj = game;
+    this.gameObj.tableId = this.id;
+    this.gameObj.roomId = this.roomId;
+    this.emit( Const.Events.GAME_CREATED, this.gameObj );
+}
 
 Table.prototype.changeStatus = function(newStatus){
     console.log( '[Table] [changeStatus] -> ' + newStatus );
     this.status = newStatus;
+
+    if ( newStatus === Const.TableStatus.PLAYING ){
+        this.gameObj.start();
+    }
 
     this.emit( Const.Events.TABLE_CHANGE_STATUS, newStatus );
 }
@@ -68,6 +85,15 @@ Table.prototype.getCardsFromDeck = function(nCards){
     }
 
     return hand;
+}
+
+Table.prototype.getData = function(){
+    return {
+        id: this.id,
+        config: this.config,
+        status: this.status,
+        players: this.players
+    }
 }
 
 module.exports = Table;

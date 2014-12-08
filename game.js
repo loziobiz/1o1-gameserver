@@ -12,24 +12,19 @@ var Turn = require( './turn' ),
     deck = require('./deck');
 
 
-var id = UUIDGen.uuidFast();
-var config = {};
-var scores = {};
-var table = {};
-var rounds = [];
+function Game(gameConfig){
+    events.EventEmitter.call(this);
 
+    this.id = UUIDGen.uuidFast();
+    this.config = gameConfig;
+    this.scores = {};
+    this.rounds = [];
+    this.tableId = undefined;
+    this.roomId = undefined;
+}
+Game.prototype.__proto__ = events.EventEmitter.prototype;
 
-var eventDispatcher = function(){
-    var EventDispatcher = function(){
-        events.EventEmitter.call(this);
-    }
-    EventDispatcher.prototype.__proto__ = events.EventEmitter.prototype;
-
-    return new EventDispatcher();
-}();
-
-
-function getCardIndexById(cardsArray, cardId){
+Game.prototype.getCardIndexById = function(cardsArray, cardId){
     var i = cardsArray.length;
 
     while (i--){
@@ -41,7 +36,7 @@ function getCardIndexById(cardsArray, cardId){
     return -1;
 }
 
-function getCardById(cardsArray, cardId){
+Game.prototype.getCardById = function(cardsArray, cardId){
     var i = cardsArray.length;
 
     while (i--){
@@ -49,24 +44,15 @@ function getCardById(cardsArray, cardId){
     }
 }
 
-function onTableChangeStatus(newStatus){
-    if ( newStatus === Const.TableStatus.PLAYING ){
-        start();
-    }
-}
-
-function onTurnChangeStatus(oldStatus, newStatus){
+Game.prototype.onTurnChangeStatus = function(oldStatus, newStatus){
     var that = this;
 
     switch (newStatus){
         case Const.TurnStatus.DRAW_CARDS:
-            var i = this.table.players.length,
-                index = 0;
-
             console.log( '[Game] [ ' + table.deck.length + ' ] cards left in deck' );
 
             _.defer(function(){
-                eventDispatcher.emit( Const.Events.TURN_DRAW_CARDS, that.drawedCards );
+                that.emit( Const.Events.TURN_DRAW_CARDS, that.drawedCards );
             });
 
             _.delay(function(){
@@ -79,7 +65,7 @@ function onTurnChangeStatus(oldStatus, newStatus){
         case Const.TurnStatus.IDLE:
         case Const.TurnStatus.WAITING:
             _.defer(function(){
-                eventDispatcher.emit( Const.Events.GAME_WAITING, that.playerToAct );
+                that.emit( Const.Events.GAME_WAITING, that.playerToAct );
             });
 
             break;
@@ -88,14 +74,14 @@ function onTurnChangeStatus(oldStatus, newStatus){
             this.removeAllListeners( Const.Events.TURN_CHANGE_STATUS );
 
             _.defer(function(){
-                eventDispatcher.emit( Const.Events.TURN_ENDED, that.winnerId );
+                that.emit( Const.Events.TURN_ENDED, that.winnerId );
             });
 
             _.delay(function(){
                 if ( that.isLastTurn() ){
-                    endRound( that.round );
+                    that.endRound( that.round );
                 } else {
-                    newTurn();
+                    that.newTurn();
                 }
             }, 10);
 
@@ -103,17 +89,17 @@ function onTurnChangeStatus(oldStatus, newStatus){
     }
 }
 
-function onTurnStarted(){
+Game.prototype.onTurnStarted = function(){
     this.removeAllListeners( Const.Events.TURN_STARTED );
 
     var that = this;
 
     _.defer(function(){
-        eventDispatcher.emit( Const.Events.TURN_STARTED, that.id );
+        that.emit( Const.Events.TURN_STARTED, that.id );
     });
 }
 
-function calculateRoundScores(round) {
+Game.prototype.calculateRoundScores = function(round) {
     var _scores = {},
         _points = {},
         _lastTurnWinnerId = round.turns[round.turns.length-1].winnerId;
@@ -151,22 +137,23 @@ function calculateRoundScores(round) {
     round.scores = _scores;
 };
 
-function endRound(round){
-    var targetScoreReached = false;
+Game.prototype.endRound = function(round){
+    var targetScoreReached = false,
+        that = this;
 
-    calculateRoundScores(round);
+    this.calculateRoundScores(round);
 
     _.each(round.scores, function(value, key, list){
-        scores[key] = ( scores[key] && scores[key] > 0 ) ? scores[key] + value : value;
-        if ( scores[key] >= config.targetScore ) targetScoreReached = true;
+        that.scores[key] = ( that.scores[key] && that.scores[key] > 0 ) ? that.scores[key] + value : value;
+        if ( that.scores[key] >= config.targetScore ) targetScoreReached = true;
     });
 
-    eventDispatcher.emit( Const.Events.ROUND_ENDED, round );
+    that.emit( Const.Events.ROUND_ENDED, round );
 
     if ( !targetScoreReached ) {
-        newRound();
+        that.newRound();
     } else {
-        eventDispatcher.emit( Const.Events.GAME_ENDED );
+        that.emit( Const.Events.GAME_ENDED );
     }
 }
 
@@ -175,27 +162,28 @@ function endRound(round){
  *
  * @param round
  */
-function newTurn(round){
+Game.prototype.newTurn = function(round){
     console.log('[Game] >>>>> NEW TURN ---------------' );
     var _round = (round) ? round : getLastRound(),
         isFirstTurn = ( _round.turns.length > 0 ) ? false : true,
-        lastWinnerId = ( _round.turns.length > 0 ) ? getLastTurn().winnerId : undefined,
+        lastWinnerId = ( _round.turns.length > 0 ) ? this.getLastTurn().winnerId : undefined,
         lastWinnerIdx = ( lastWinnerId !== undefined ) ? table.getPlayerIndexById( lastWinnerId) : undefined,
-        turn = new Turn( table, getLastRound(), isFirstTurn, lastWinnerIdx );
+        turn = new Turn( table, this.getLastRound(), isFirstTurn, lastWinnerIdx );
 
-    turn.on( Const.Events.TURN_CHANGE_STATUS, onTurnChangeStatus );
-    turn.on( Const.Events.TURN_STARTED, onTurnStarted );
+    turn.on( Const.Events.TURN_CHANGE_STATUS, this.onTurnChangeStatus );
+    turn.on( Const.Events.TURN_STARTED, this.onTurnStarted );
 
     _round.turns.push( turn );
 
     turn.start();
 }
 
-function newRound(){
+Game.prototype.newRound = function(){
     console.log('[Game] ========= NEW ROUND ============' );
     var round = {},
         dealSequence = [],
-        player = undefined;
+        player = undefined,
+        that = this;
 
     /* Prepare deck */
     table.deck = deck.getShuffledDeck( config.cards );
@@ -203,7 +191,7 @@ function newRound(){
 
     /* Generate id and set dealer index */
     round.id = UUIDGen.uuidFast();
-    round.dealerIdx = getDealerIdx();
+    round.dealerIdx = this.getDealerIdx();
     round.dealerId = table.players[round.dealerIdx];
 
     /* Sets dealing sequence */
@@ -222,10 +210,10 @@ function newRound(){
 
     /* Set empty turns array and add round to rounds array */
     round.turns = [];
-    rounds.push( round );
+    this.rounds.push( round );
 
     _.defer(function(){
-        eventDispatcher.emit( Const.Events.ROUND_NEW, id);
+        that.emit( Const.Events.ROUND_NEW, id);
     });
 
 
@@ -233,13 +221,13 @@ function newRound(){
     newTurn( round );
 }
 
-function getDealerIdx() {
+Game.prototype.getDealerIdx = function() {
     var max = table.players.length - 1,
         randomnumber = Math.floor(Math.random() * (max - 0 + 1)) + 0,
-        nRounds = rounds.length;
+        nRounds = this.rounds.length;
 
     if ( nRounds > 0 ) {
-        var preDealerIdx = rounds[nRounds-1].dealerIdx;
+        var preDealerIdx = this.rounds[nRounds-1].dealerIdx;
 
         return ( preDealerIdx < nRounds-1 ) ? preDealerIdx++ : 0
     }
@@ -248,14 +236,14 @@ function getDealerIdx() {
 
 }
 
-function setTable(riftable){
-    table = riftable;
-    table.on( Const.Events.TABLE_CHANGE_STATUS, onTableChangeStatus );
-}
-
-function start(){
+Game.prototype.start = function(){
     console.log( '[Game] [start]' );
-    eventDispatcher.emit( Const.Events.GAME_STARTED, id );
+
+    var that = this;
+    _.defer(function(){
+        that.emit( Const.Events.GAME_STARTED, that.id );
+    });
+
 
     /*
     server.sendMsg( [hero, villain], "GameStart", {} );
@@ -265,26 +253,28 @@ function start(){
     */
 }
 
-function getLastTurn(){
-    if ( !getLastRound() ) return undefined;
+Game.prototype.getLastTurn = function(){
+    if ( !this.getLastRound() ) return undefined;
 
-    var turns = getLastRound().turns;
+    var turns = this.getLastRound().turns;
 
     if ( turns.length === 0 ) return undefined;
 
     return turns[turns.length - 1];
 }
 
-function getLastRound(){
-    if ( rounds.length === 0 ) return undefined;
+Game.prototype.getLastRound = function(){
+    if ( this.rounds.length === 0 ) return undefined;
 
-    return rounds[rounds.length - 1];
+    return this.rounds[this.rounds.length - 1];
 }
 
-var getCurrentTurn = getLastTurn;
+Game.prototype.getCurrentTurn = function(){
+    return this.getLastTurn();
+}
 
-function getTurnById(turnId){
-    var turns = getLastRound().turns,
+Game.prototype.getTurnById = function(turnId){
+    var turns = this.getLastRound().turns,
         i = turns.length;
 
     while( i-- ){
@@ -293,7 +283,7 @@ function getTurnById(turnId){
     }
 }
 
-function checkCardPlayable( playedCard, turn, playerCards ) {
+Game.prototype.checkCardPlayable = function( playedCard, turn, playerCards ) {
     var playableCards = ai.getPlayableCards( playerCards, turn ),
         retval = false;
 
@@ -306,21 +296,22 @@ function checkCardPlayable( playedCard, turn, playerCards ) {
     return retval;
 }
 
-function playCard( playerId, cardId ){
-    var player = table.getPlayerById( playerId );
-    var cardIndex = getCardIndexById( player.holeCards, cardId );
-    var currentTurn = getCurrentTurn();
+Game.prototype.playCard = function( playerId, cardId ){
+    var that = this;
+    var player = that.table.getPlayerById( playerId );
+    var cardIndex = that.getCardIndexById( player.holeCards, cardId );
+    var currentTurn = that.getCurrentTurn();
     var playedCard = player.holeCards[cardIndex],
-        cardIsPlayable = checkCardPlayable( playedCard, currentTurn, player.holeCards );    //TODO: fare checkCardPlayable compatta senza pescare sempre da getPlayableCards
+        cardIsPlayable = that.checkCardPlayable( playedCard, currentTurn, player.holeCards );    //TODO: fare checkCardPlayable compatta senza pescare sempre da getPlayableCards
 
     if ( cardIsPlayable ) {
         currentTurn.setCardPlayed( playerId, playedCard );
         player.holeCards.splice( cardIndex, 1 )[0];
-        eventDispatcher.emit( Const.Events.CARD_PLAYED, playedCard ); //TODO: capire se è il caso di aspettare un evento da turn su cui triggerare questo
+        that.emit( Const.Events.CARD_PLAYED, playedCard ); //TODO: capire se è il caso di aspettare un evento da turn su cui triggerare questo
 
         return playedCard;
     } else {
-        eventDispatcher.emit( Const.Events.CARD_NOT_PLAYABLE, playedCard );
+        that.emit( Const.Events.CARD_NOT_PLAYABLE, playedCard );
 
         return false;
     }
@@ -328,44 +319,28 @@ function playCard( playerId, cardId ){
     return false;
 }
 
-function checkGameCanStart(){
+Game.prototype.checkGameCanStart = function(){
     var nplayers = table.players.length,
         i = nplayers,
         count = 0;
 
     while(i--){
-        if ( table.players[i].readyToPlay ) count++;
+        if ( this.table.players[i].readyToPlay ) count++;
     }
 
     if ( nplayers === count )
-        newRound();
+        this.newRound();
 }
 
-function setPlayerReady(playerId){
+Game.prototype.setPlayerReady = function(playerId){
     table.getPlayerById(playerId).readyToPlay = true;
 
     checkGameCanStart();
 }
 
-function getPlayerToActId(){
+Game.prototype.getPlayerToActId = function(){
     var lastTurn = getLastTurn();
     return lastTurn.playerToAct.id;
-}
-
-function Game(gameConfig){
-    config = gameConfig;
-
-    return{
-        id: id,
-        deck: deck,
-        setTable: setTable,
-        getLastTurn: getLastTurn,
-        getLastRound: getLastRound,
-        playCard: playCard,
-        eventDispatcher: eventDispatcher,
-        setPlayerReady: setPlayerReady,
-        getPlayerToActId: getPlayerToActId
-    }
 }
 
 

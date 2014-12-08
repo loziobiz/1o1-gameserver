@@ -22,24 +22,24 @@ var game1 = new Game( gamesConfig.tresette );
 table1.gameObj = game1;
 game1.setTable( table1 );
 
-game1.eventDispatcher.on( Const.Events.GAME_STARTED, function(player){
+game1.on( Const.Events.GAME_STARTED, function(player){
     //console.log( '...... Game is waiting for player: ' + player.id + ' .......' );
     _.each(table1.players, function(element, index, list){
         game1.setPlayerReady( element.id );
     })
 } );
 
-game1.eventDispatcher.on( Const.Events.GAME_WAITING, function(player){
+game1.on( Const.Events.GAME_WAITING, function(player){
     //console.log( '...... Game is waiting for player: ' + player.id + ' .......' );
     var firstPlayableCard = ai.getFirstPlayableCard( table1.getPlayerById( player.id ).holeCards, game1.getLastTurn() );
     game1.playCard( player.id, firstPlayableCard.id );
 } );
 
-game1.eventDispatcher.on( Const.Events.CARD_NOT_PLAYABLE, function(card){
+game1.on( Const.Events.CARD_NOT_PLAYABLE, function(card){
     console.log( 'CARD_NOT_PLAYABLE: ' + JSON.stringify(card) );
 } );
 
-game1.eventDispatcher.on( Const.Events.ROUND_ENDED, function(round){
+game1.on( Const.Events.ROUND_ENDED, function(round){
     console.log( 'ROUND IS OVER');
     console.log( '> player ' + table1.players[0].id + ' = ' + round.scores[table1.players[0].id] );
     console.log( '> player ' + table1.players[1].id + ' = ' + round.scores[table1.players[1].id] );

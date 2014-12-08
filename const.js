@@ -4,6 +4,7 @@
 
 var Events = {
     TABLE_CHANGE_STATUS: 'table_change_status',
+    TABLE_START_PLAYING: 'TABLE_START_PLAYING',
     TURN_CHANGE_STATUS: 'turn_change_status',
     TURN_READY: 'turn_new',
     TURN_ENDED: 'TURN_ENDED',
@@ -12,6 +13,7 @@ var Events = {
     GAME_WAITING: 'GAME_WAITING',
     GAME_ENDED: 'GAME_ENDED',
     GAME_STARTED: 'GAME_STARTED',
+    GAME_CREATED: 'GAME_CREATED',
     ROUND_ENDED: 'ROUND_ENDED',
     ROUND_NEW: 'NEW_ROUND',
     CARD_PLAYED: 'CARD_PLAYED',
@@ -54,6 +56,7 @@ var ProtocolEvents = {
     NOTIFY_WAIT_PLAYER_ACTION: 'notifyWaitingForPlayerAction',
     NOTIFY_TURN_ENDED: 'notifyTurnEnded',
     NOTIFY_TURN_STARTED: 'notifyTurnStarted',
-    NOTIFY_DRAW_CARDS: 'notifyDrawCards'
+    NOTIFY_DRAW_CARDS: 'notifyDrawCards',
+    NOTIFY_GAME_STARTED: 'notifyGameStarted'
 }
 exports.ProtocolEvents = ProtocolEvents;
