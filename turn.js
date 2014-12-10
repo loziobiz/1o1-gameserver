@@ -9,11 +9,13 @@ var events = require('events'),
     _ = require('underscore'),
     UUIDGen = require('./uuidgen');
 
-var Turn = function(table, round, isFirstTurn, previousWinnerIdx){
+module.exports = Turn;
+
+function Turn(game, round, isFirstTurn, previousWinnerId){
     events.EventEmitter.call(this);
     this.id = UUIDGen.uuidFast();
-    this.table = table;
-    this.roundId = round.id;
+    this.game = game;
+    this.table = game.getTableObj();
     this.round = round;
     this.status = Const.TurnStatus.EMPTY; // VALUES: 'empty', 'idle', 'wait', 'ended'
     this.cardsPlayed = []; // something like [ {playerId:id, cardPlayed:card, timestamp:time},... ]
@@ -22,12 +24,11 @@ var Turn = function(table, round, isFirstTurn, previousWinnerIdx){
     this.playingSequence = [];
     this.drawedCards = {};
     this.isFirstTurn = isFirstTurn;
-    this.previousWinnerIdx = previousWinnerIdx;
+    this.previousWinnerId = previousWinnerId;
 
     this.emit( Const.Events.TURN_READY, this.id );
 }
 Turn.prototype.__proto__ = events.EventEmitter.prototype;
-
 
 
 Turn.prototype.setStatus = function(newStatus){
@@ -89,7 +90,7 @@ Turn.prototype.isLastTurn = function(){
 Turn.prototype.getPlayingSequenceAsArray = function(){
     var sequence = [];
 
-    var firstPlayerIndex = ( this.isFirstTurn ) ? this.round.dealerIdx : this.previousWinnerIdx;
+    var firstPlayerIndex = ( this.isFirstTurn ) ? this.round.dealerIdx : this.previousWinnerId;
 
     for ( var i = firstPlayerIndex; i < this.table.players.length; i++ ){
         sequence.push( i );
@@ -157,4 +158,3 @@ Turn.prototype.start = function(){
 
 }
 
-module.exports = Turn;

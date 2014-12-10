@@ -6,56 +6,37 @@
 var Room = require( './room'),
     Table = require( './table'),
     Game = require( './game' ),
-    Const = require( './const' ),
+    Const = require('./const'),
+    Events = Const.Events,
+    PEvents = Const.ProtocolEvents,
     Player = require( './player'),
     _ = require('underscore'),
     ai = require( './ai'),
-    gamesConfig = require( './gamesConfig' );
+    roomsConfig = require('./roomsConf'),
+    gamesConfig = require( './gamesConfig'),
+    gameServerManager = require('./gameServerManager'),
+    io = require('socket.io-client')
 
 
-var room1 = new Room("Test Room");
-var table1 = new Table('001');
-var game1 = new Game( gamesConfig.tresette );
+var socket = io.connect('localhost:5000', {reconnect: true});
 
-//console.log(game1.deck);
 
-table1.gameObj = game1;
-game1.setTable( table1 );
-
-game1.on( Const.Events.GAME_STARTED, function(player){
-    //console.log( '...... Game is waiting for player: ' + player.id + ' .......' );
-    _.each(table1.players, function(element, index, list){
-        game1.setPlayerReady( element.id );
-    })
-} );
-
-game1.on( Const.Events.GAME_WAITING, function(player){
-    //console.log( '...... Game is waiting for player: ' + player.id + ' .......' );
-    var firstPlayableCard = ai.getFirstPlayableCard( table1.getPlayerById( player.id ).holeCards, game1.getLastTurn() );
-    game1.playCard( player.id, firstPlayableCard.id );
-} );
-
-game1.on( Const.Events.CARD_NOT_PLAYABLE, function(card){
-    console.log( 'CARD_NOT_PLAYABLE: ' + JSON.stringify(card) );
-} );
-
-game1.on( Const.Events.ROUND_ENDED, function(round){
-    console.log( 'ROUND IS OVER');
-    console.log( '> player ' + table1.players[0].id + ' = ' + round.scores[table1.players[0].id] );
-    console.log( '> player ' + table1.players[1].id + ' = ' + round.scores[table1.players[1].id] );
-} );
-
-room1.addTable(table1);
+/*
+gameServerManager.start();
 
 var player1 = new Player('01');
+player1.nickName = "p1"
 var player2 = new Player('02');
+player2.nickName = "p2"
 
-room1.addPlayer(player1);
-room1.addPlayer(player2);
+rooms.tresette.addPlayer(player1);
+rooms.tresette.addPlayer(player2);
 
-table1.playerJoin( player1 );
-table1.playerJoin( player2 );
+var tableIds = _.keys(rooms['tresette'].tables);
 
+rooms['tresette'].tables[tableIds[0]].playerJoin( player1 );
+rooms['tresette'].tables[tableIds[0]].playerJoin( player2 );
+*/
 /*
 console.log("\n\nroom1: ");
 console.log(room1);

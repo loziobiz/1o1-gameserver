@@ -60,3 +60,9 @@ var ProtocolEvents = {
     NOTIFY_GAME_STARTED: 'notifyGameStarted'
 }
 exports.ProtocolEvents = ProtocolEvents;
+
+var Decks = {
+    ITALIAN: 'italian',
+    POKER: 'poker'
+};
+exports.Decks = Decks;

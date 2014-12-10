@@ -3,10 +3,10 @@
  */
 'use strict';
 
-var UUIDGen = require('./uuidgen');
+module.exports = Card;
 
-var Card = function(val, owner){
-    this.id = UUIDGen.uuidFast();
+function Card(val, owner){
+    this.id = require('./uuidgen').uuidFast();
     this.front = (val.length === 2) ? val[0] : val[0]+val[1];
     this.suit = (val.length === 2) ? val[1] : val[2];
     this.comboValue = val;
@@ -63,4 +63,3 @@ Card.prototype.getCard = function(){
     }
 }
 
-module.exports = Card;

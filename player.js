@@ -7,6 +7,7 @@
 var _ = require('underscore'),
     UUIDGen = require('./uuidgen');
 
+module.exports = Player;
 
 function Player(playerID) {
     this.id = ( playerID ) ? playerID : UUIDGen.uuidFast();
@@ -29,4 +30,6 @@ Player.prototype.getHoleCardsAsArray = function(){
     return _.pluck(this.holeCards, 'comboValue');
 }
 
-module.exports = Player;
+Player.prototype.getData = function(){
+    return _.omit(this, 'socketId', 'roundPointElements');
+}

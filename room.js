@@ -9,6 +9,8 @@ var Table = require( './table'),
     events = require('events'),
     _ = require('underscore');
 
+module.exports = Room;
+
 function Room(id, config){
     events.EventEmitter.call(this);
 
@@ -46,13 +48,23 @@ Room.prototype.addTable = function(table) {
     this.tables[table.id] = table;
 };
 
+Room.prototype.getTables = function() {
+    var that = this,
+        tables = {};
+
+    _.each(this.tables, function(value, key, list){
+        tables[key] = that.tables[key].getData();
+    })
+
+    return tables;
+};
+
 Room.prototype.getData = function(){
     return {
         id: this.id,
-        tables: this.tables,
+        tables: this.getTables(),
         name: this.name,
         playerNum: this.players.length
     }
 }
 
-module.exports = Room;

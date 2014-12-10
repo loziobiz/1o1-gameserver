@@ -11,9 +11,6 @@ var tresette = {
     rete: true,
     roundFinalScore: true,
     startingCardsNumber: 10,
-    cards: {
-        fronts: ['3','2','A','K','Q','J','7','6','5','4'],
-        suits: ['c', 'd', 's', 'h']
-    }
+    deckType: require('./const').Decks.ITALIAN
 }
 exports.tresette = tresette;

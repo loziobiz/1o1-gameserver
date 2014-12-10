@@ -5,12 +5,16 @@
 
 var Turn = require( './turn' ),
     Const = require('./const'),
+    roomsManager = require('./roomsManager'),
+    rooms = roomsManager.rooms,
     _ = require('underscore'),
     events = require('events'),
     UUIDGen = require('./uuidgen'),
     ai = require('./ai'),
     deck = require('./deck');
 
+
+module.exports = Game;
 
 function Game(gameConfig){
     events.EventEmitter.call(this);
@@ -23,6 +27,10 @@ function Game(gameConfig){
     this.roomId = undefined;
 }
 Game.prototype.__proto__ = events.EventEmitter.prototype;
+
+Game.prototype.getTableObj = function(){
+    return rooms[this.roomId].tables[this.tableId];
+}
 
 Game.prototype.getCardIndexById = function(cardsArray, cardId){
     var i = cardsArray.length;
@@ -49,7 +57,7 @@ Game.prototype.onTurnChangeStatus = function(oldStatus, newStatus){
 
     switch (newStatus){
         case Const.TurnStatus.DRAW_CARDS:
-            console.log( '[Game] [ ' + table.deck.length + ' ] cards left in deck' );
+            console.log( '[Game] [ ' + this.getTableObj().deck.length + ' ] cards left in deck' );
 
             _.defer(function(){
                 that.emit( Const.Events.TURN_DRAW_CARDS, that.drawedCards );
@@ -104,7 +112,7 @@ Game.prototype.calculateRoundScores = function(round) {
         _points = {},
         _lastTurnWinnerId = round.turns[round.turns.length-1].winnerId;
 
-    _.each(table.players, function(element, index, list){
+    _.each(this.getTableObj().players, function(element, index, list){
         _scores[element.id] = 0;
         _points[element.id] = [];
     });
@@ -164,11 +172,12 @@ Game.prototype.endRound = function(round){
  */
 Game.prototype.newTurn = function(round){
     console.log('[Game] >>>>> NEW TURN ---------------' );
-    var _round = (round) ? round : getLastRound(),
+    var _round = (round) ? round : this.getLastRound(),
         isFirstTurn = ( _round.turns.length > 0 ) ? false : true,
-        lastWinnerId = ( _round.turns.length > 0 ) ? this.getLastTurn().winnerId : undefined,
-        lastWinnerIdx = ( lastWinnerId !== undefined ) ? table.getPlayerIndexById( lastWinnerId) : undefined,
-        turn = new Turn( table, this.getLastRound(), isFirstTurn, lastWinnerIdx );
+        lastWinnerId = ( _round.turns.length > 0 )
+            ? this.getLastTurn().winnerId
+            : undefined,
+        turn = new Turn( this, this.getLastRound(), isFirstTurn, lastWinnerId );
 
     turn.on( Const.Events.TURN_CHANGE_STATUS, this.onTurnChangeStatus );
     turn.on( Const.Events.TURN_STARTED, this.onTurnStarted );
@@ -183,10 +192,14 @@ Game.prototype.newRound = function(){
     var round = {},
         dealSequence = [],
         player = undefined,
-        that = this;
+        that = this,
+        table = this.getTableObj(),
+        playerIds = _.keys(table.players),
+        playersNum = playerIds.length,
+        cards = require('./deckTypes')[this.config.deckType];
 
     /* Prepare deck */
-    table.deck = deck.getShuffledDeck( config.cards );
+    table.deck = deck.getShuffledDeck( cards );
     round.deck = table.deck;
 
     /* Generate id and set dealer index */
@@ -195,13 +208,13 @@ Game.prototype.newRound = function(){
     round.dealerId = table.players[round.dealerIdx];
 
     /* Sets dealing sequence */
-    for ( var i = round.dealerIdx; i < table.players.length; i++ ) dealSequence.push( i );
-    for ( var i = 0; i < round.dealerIdx; i++ ) dealSequence.push( i );
+    for ( var i = round.dealerIdx; i < playersNum; i++ ) dealSequence.push( playerIds[i] );
+    for ( var i = 0; i < round.dealerIdx; i++ ) dealSequence.push( playerIds[i] );
 
     /* Deal cards for each player */
     for (var i=0; i<dealSequence.length; i++){
         player = table.players[dealSequence[i]];
-        player.holeCards = table.getCardsFromDeck( config.startingCardsNumber );
+        player.holeCards = table.getCardsFromDeck( this.config.startingCardsNumber );
         console.log('player ' + player.id + ' holecards: ' + player.getHoleCardsAsArray() );
     }
 
@@ -213,33 +226,37 @@ Game.prototype.newRound = function(){
     this.rounds.push( round );
 
     _.defer(function(){
-        that.emit( Const.Events.ROUND_NEW, id);
+        that.emit( Const.Events.ROUND_NEW, round.dealerId);
     });
 
-
     /* Starts new turn */
-    newTurn( round );
+    this.newTurn( round );
 }
 
 Game.prototype.getDealerIdx = function() {
-    var max = table.players.length - 1,
+    var playersIdArray = _.keys(this.getTableObj().players),
+        max = playersIdArray.length - 1,
         randomnumber = Math.floor(Math.random() * (max - 0 + 1)) + 0,
-        nRounds = this.rounds.length;
+        nRounds = this.rounds.length,
+        dealerIdx = 0,
+        preDealerIdx = 0;
 
     if ( nRounds > 0 ) {
-        var preDealerIdx = this.rounds[nRounds-1].dealerIdx;
-
-        return ( preDealerIdx < nRounds-1 ) ? preDealerIdx++ : 0
+        preDealerIdx = this.rounds[nRounds-1].dealerIdx;
+        dealerIdx = ( preDealerIdx < nRounds-1 ) ? preDealerIdx++ : 0;
+    } else {
+        dealerIdx = randomnumber;
     }
 
-    return randomnumber;
+    return dealerIdx;
 
 }
 
-Game.prototype.start = function(){
+Game.prototype.startServer = function(){
     console.log( '[Game] [start]' );
 
     var that = this;
+
     _.defer(function(){
         that.emit( Const.Events.GAME_STARTED, that.id );
     });
@@ -298,7 +315,7 @@ Game.prototype.checkCardPlayable = function( playedCard, turn, playerCards ) {
 
 Game.prototype.playCard = function( playerId, cardId ){
     var that = this;
-    var player = that.table.getPlayerById( playerId );
+    var player = this.getTableObj().getPlayerById( playerId );
     var cardIndex = that.getCardIndexById( player.holeCards, cardId );
     var currentTurn = that.getCurrentTurn();
     var playedCard = player.holeCards[cardIndex],
@@ -320,28 +337,35 @@ Game.prototype.playCard = function( playerId, cardId ){
 }
 
 Game.prototype.checkGameCanStart = function(){
-    var nplayers = table.players.length,
+    var table = this.getTableObj(),
+        nplayers = table.players.length,
         i = nplayers,
         count = 0;
 
     while(i--){
-        if ( this.table.players[i].readyToPlay ) count++;
+        if ( table.players[i].readyToPlay ) count++;
     }
 
     if ( nplayers === count )
         this.newRound();
 }
 
-Game.prototype.setPlayerReady = function(playerId){
-    table.getPlayerById(playerId).readyToPlay = true;
-
-    checkGameCanStart();
-}
-
 Game.prototype.getPlayerToActId = function(){
-    var lastTurn = getLastTurn();
+    var lastTurn = this.getLastTurn();
     return lastTurn.playerToAct.id;
 }
 
+Game.prototype.getData = function(){
+    return _.pick(this, 'id', 'tableId', 'roomId', 'config');
+}
 
-module.exports = Game;
+Game.prototype.getOpponents = function(heroId){
+    var table = this.getTableObj(),
+        opponents = _.omit(table.players, heroId);
+
+    _.each(opponents, function(v,k,l){
+        opponents[k] = _.omit(opponents[k].getData(), 'holeCards');
+    })
+
+    return opponents;
+}
