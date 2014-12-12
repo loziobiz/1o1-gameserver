@@ -20,7 +20,7 @@ function Turn(game, round, isFirstTurn, previousWinnerId){
     this.status = Const.TurnStatus.EMPTY; // VALUES: 'empty', 'idle', 'wait', 'ended'
     this.cardsPlayed = []; // something like [ {playerId:id, cardPlayed:card, timestamp:time},... ]
     this.winnerId = undefined;
-    this.playerToAct = undefined;
+    this.playerToActId = undefined;
     this.playingSequence = [];
     this.drawedCards = {};
     this.isFirstTurn = isFirstTurn;
@@ -39,23 +39,27 @@ Turn.prototype.setStatus = function(newStatus){
 
     switch (newStatus){
         case Const.TurnStatus.DRAW_CARDS:
-            var l = this.table.players.length,
-                index = 0;
+            var playerIds = _.keys(this.table.players),
+                l = playerIds.length,
+                playerId = 0,
+                drawedCard = {};
 
-            var drawedCards = this.table.getCardsFromDeck( this.table.players.length );
+            var drawedCards = this.table.getCardsFromDeck( l );
 
             for ( var i=0; i < l; i++){
-                index = this.playingSequence[i];
-                this.drawedCards[this.table.players[index].id] = drawedCards[index]
-                this.table.players[index].holeCards.push( drawedCards[index] );
-                console.log( '[Turn] [ ' + drawedCards[index].comboValue + ' drawed to pleyer ' + this.table.players[index].id + ' ] holecards: ' + this.table.players[index].getHoleCardsAsArray() );
+                drawedCard = this.table.getCardsFromDeck( 1 )[0];
+                playerId = this.playingSequence[i];
+                this.drawedCards[playerId] = drawedCard;
+                this.table.players[playerId].holeCards.push( drawedCard );
+
+                console.log( '[Turn] [ ' + drawedCard.comboValue + ' drawed to player ' + playerId + ' ] holecards: ' + this.table.players[playerId].getHoleCardsAsArray() );
             }
 
             break;
 
         case Const.TurnStatus.IDLE:
         case Const.TurnStatus.WAITING:
-            this.playerToAct = this.table.players[this.playingSequence[0]];
+            this.playerToActId = this.playingSequence[0];
 
             break;
 
@@ -75,29 +79,30 @@ Turn.prototype.setStatus = function(newStatus){
 
 Turn.prototype.isLastTurn = function(){
     var totCardLeft = 0,
-        i = this.table.players.length;
+        playerIds = _.keys(this.table.players),
+        i = playerIds.length;
 
     while(i--){
-        totCardLeft += this.table.players[i].holeCards.length;
+        totCardLeft += this.table.players[playerIds[i]].holeCards.length;
     }
 
     if ( totCardLeft > 0 )
         return false
     else
-        return true
+        return true;
 }
 
 Turn.prototype.getPlayingSequenceAsArray = function(){
     var sequence = [];
+    var playerIds = _.keys(this.table.players);
+    var firstPlayerIndex = ( this.isFirstTurn ) ? this.round.dealerIdx : _.indexOf(playerIds, this.previousWinnerId);
 
-    var firstPlayerIndex = ( this.isFirstTurn ) ? this.round.dealerIdx : this.previousWinnerId;
-
-    for ( var i = firstPlayerIndex; i < this.table.players.length; i++ ){
-        sequence.push( i );
+    for ( var i = firstPlayerIndex; i < playerIds.length; i++ ){
+        sequence.push( playerIds[i] );
     }
 
     for ( var i = 0; i < firstPlayerIndex; i++ ){
-        sequence.push( i );
+        sequence.push( playerIds[i] );
     }
 
     return sequence;
@@ -128,6 +133,9 @@ Turn.prototype.getWinnerId = function(){
 
 Turn.prototype.setCardPlayed = function(playerId, card){
     console.log('[Turn] [setCardPlayed] playerId: ' + playerId + ', card: ' + card.comboValue );
+
+    var players = _.keys( this.table.players );
+
     this.cardsPlayed.push({
         playerId: playerId,
         cardPlayed: card,
@@ -136,11 +144,11 @@ Turn.prototype.setCardPlayed = function(playerId, card){
 
     this.playingSequence.shift();
 
-    if ( this.cardsPlayed.length > 0  && this.cardsPlayed.length < this.table.players.length ){
+    if ( this.cardsPlayed.length > 0  && this.cardsPlayed.length < players.length ){
         this.setStatus( Const.TurnStatus.WAITING );
     }
 
-    if (this.cardsPlayed.length === this.table.players.length ){
+    if (this.cardsPlayed.length === players.length ){
         this.setStatus( Const.TurnStatus.ENDED );
     }
 }

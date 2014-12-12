@@ -61,7 +61,7 @@ Table.prototype.playerJoin = function(player) {
 }
 
 Table.prototype.getPlayerById = function(playerId){
-    return players[playerId];
+    return this.players[playerId];
 };
 
 Table.prototype.getCardsFromDeck = function(nCards){

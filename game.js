@@ -52,20 +52,20 @@ Game.prototype.getCardById = function(cardsArray, cardId){
     }
 }
 
-Game.prototype.onTurnChangeStatus = function(oldStatus, newStatus){
+Game.prototype.onTurnChangeStatus = function(oldStatus, newStatus, thisObj){
     var that = this;
 
     switch (newStatus){
         case Const.TurnStatus.DRAW_CARDS:
-            console.log( '[Game] [ ' + this.getTableObj().deck.length + ' ] cards left in deck' );
+            console.log( '[Game] [ ' + thisObj.getTableObj().deck.length + ' ] cards left in deck' );
 
             _.defer(function(){
-                that.emit( Const.Events.TURN_DRAW_CARDS, that.drawedCards );
+                thisObj.emit( Const.Events.TURN_DRAW_CARDS, that.drawedCards );
             });
 
             _.delay(function(){
                 that.setStatus( Const.TurnStatus.IDLE );
-            }, 100);
+            }, 50);
 
 
             break;
@@ -73,7 +73,7 @@ Game.prototype.onTurnChangeStatus = function(oldStatus, newStatus){
         case Const.TurnStatus.IDLE:
         case Const.TurnStatus.WAITING:
             _.defer(function(){
-                that.emit( Const.Events.GAME_WAITING, that.playerToAct );
+                thisObj.emit( Const.Events.GAME_WAITING, thisObj.getPlayerToActId() );
             });
 
             break;
@@ -82,14 +82,14 @@ Game.prototype.onTurnChangeStatus = function(oldStatus, newStatus){
             this.removeAllListeners( Const.Events.TURN_CHANGE_STATUS );
 
             _.defer(function(){
-                that.emit( Const.Events.TURN_ENDED, that.winnerId );
+                thisObj.emit( Const.Events.TURN_ENDED, that.winnerId );
             });
 
             _.delay(function(){
                 if ( that.isLastTurn() ){
-                    that.endRound( that.round );
+                    thisObj.endRound( that.round );
                 } else {
-                    that.newTurn();
+                    thisObj.newTurn( that.round );
                 }
             }, 10);
 
@@ -97,13 +97,13 @@ Game.prototype.onTurnChangeStatus = function(oldStatus, newStatus){
     }
 }
 
-Game.prototype.onTurnStarted = function(){
-    this.removeAllListeners( Const.Events.TURN_STARTED );
-
+Game.prototype.onTurnStarted = function(thisObj){
     var that = this;
 
+    this.removeAllListeners( Const.Events.TURN_STARTED );
+
     _.defer(function(){
-        that.emit( Const.Events.TURN_STARTED, that.id );
+        thisObj.emit( Const.Events.TURN_STARTED, that.id );
     });
 }
 
@@ -153,7 +153,7 @@ Game.prototype.endRound = function(round){
 
     _.each(round.scores, function(value, key, list){
         that.scores[key] = ( that.scores[key] && that.scores[key] > 0 ) ? that.scores[key] + value : value;
-        if ( that.scores[key] >= config.targetScore ) targetScoreReached = true;
+        if ( that.scores[key] >= that.config.targetScore ) targetScoreReached = true;
     });
 
     that.emit( Const.Events.ROUND_ENDED, round );
@@ -172,15 +172,21 @@ Game.prototype.endRound = function(round){
  */
 Game.prototype.newTurn = function(round){
     console.log('[Game] >>>>> NEW TURN ---------------' );
-    var _round = (round) ? round : this.getLastRound(),
+    var that = this,
+        _round = (round) ? round : this.getLastRound(),
         isFirstTurn = ( _round.turns.length > 0 ) ? false : true,
         lastWinnerId = ( _round.turns.length > 0 )
             ? this.getLastTurn().winnerId
             : undefined,
         turn = new Turn( this, this.getLastRound(), isFirstTurn, lastWinnerId );
 
-    turn.on( Const.Events.TURN_CHANGE_STATUS, this.onTurnChangeStatus );
-    turn.on( Const.Events.TURN_STARTED, this.onTurnStarted );
+    turn.on( Const.Events.TURN_CHANGE_STATUS, function(oldStatus, newStatus){
+        that.onTurnChangeStatus.call(this, oldStatus, newStatus, that);
+    } );
+
+    turn.on( Const.Events.TURN_STARTED, function(){
+        that.onTurnStarted.call(this, that);
+    } );
 
     _round.turns.push( turn );
 
@@ -352,7 +358,7 @@ Game.prototype.checkGameCanStart = function(){
 
 Game.prototype.getPlayerToActId = function(){
     var lastTurn = this.getLastTurn();
-    return lastTurn.playerToAct.id;
+    return lastTurn.playerToActId;
 }
 
 Game.prototype.getData = function(){

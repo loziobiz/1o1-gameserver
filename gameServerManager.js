@@ -74,31 +74,43 @@ var self = module.exports = {
             });
         });
 
-        game.on(Events.GAME_WAITING, function(player){
-            _.defer(function(){
-                self.io.to( roomName ).
-                    emit( Events.NOTIFY_WAIT_PLAYER_ACTION, {playerId: player.id} );
-            });
-        });
-
         game.on(Events.TURN_STARTED, function(turnId){
+            var table = game.getTableObj(),
+                tableId = table.id;
+
             _.defer(function(){
-                self.io.to( game.getTableObj().id ).
+                self.io.to( tableId ).
                     emit( PEvents.NOTIFY_TURN_STARTED, {turnId: turnId, gameId: game.id} );
             });
         });
 
         game.on(Events.TURN_ENDED, function(winnerId){
+            var table = game.getTableObj(),
+                tableId = table.id;
+
             _.defer(function(){
-                self.io.to( roomName ).
+                self.io.to( tableId ).
                     emit( PEvents.NOTIFY_TURN_ENDED, {winnerId: winnerId} );
             });
         });
 
         game.on(Events.TURN_DRAW_CARDS, function(drawedCards){
+            var table = game.getTableObj(),
+                tableId = table.id;
+
             _.defer(function(){
-                self.io.to( roomName ).
+                self.io.to( tableId ).
                     emit( PEvents.NOTIFY_DRAW_CARDS, {drawedCards: drawedCards} );
+            });
+        });
+
+        game.on(Events.GAME_WAITING, function(playerId){
+            var table = game.getTableObj(),
+                tableId = table.id;
+
+            _.defer(function(){
+                self.io.to( tableId ).
+                    emit( PEvents.NOTIFY_WAIT_PLAYER_ACTION, {playerId: playerId} );
             });
         });
     }

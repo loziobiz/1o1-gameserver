@@ -7,7 +7,6 @@ var express = require('express'),
     _ = require('underscore'),
     Player = require( './player'),
     Const = require('./const'),
-    Events = Const.Events,
     PEvents = Const.ProtocolEvents,
     gameServerManager = require('./gameServerManager'),
     rooms = gameServerManager.rooms,
@@ -15,25 +14,6 @@ var express = require('express'),
 
 
 app.set('port', (process.env.PORT || 5000));
-
-gameServerManager.startServer(io);
-
-/*
-_.each(roomsConfig, function(value, key, list){
-    rooms[key] = new Room( key, value );
-    rooms[key].on(Events.TABLE_START_PLAYING, function(table){
-        runningGames[table.gameObj.id] = table.gameObj;
-        attachGameHandlers( runningGames[table.gameObj.id] );
-    } );
-});
-*/
-
-/*
-app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
-});
-*/
-
 
 io.on('connection', function(socket){
     var player = {};
@@ -63,6 +43,7 @@ io.on('connection', function(socket){
             };
 
         socket.join( tableId );
+
         table.playerJoin( player );
 
         _.defer(function(){
@@ -91,19 +72,25 @@ io.on('connection', function(socket){
 
     //TODO: refactor con funzioni per ricavare game, table ecc senza rifare ogni volta il giro in ogni evento
     socket.on(PEvents.PLAY_CARD_REQUEST, function(playerId, gameId, cardId){
-        var game = runningGames[gameId],
+        var game = games[gameId],
+            playerToActId = game.getPlayerToActId(),
             data = {};
 
-        if ( game.getPlayerToActId() ===  playerId ){
+        if ( playerToActId ===  playerId ){
             var cardPlayed = game.playCard( playerId, cardId );
 
             if ( cardPlayed ) {
-                data = {gameId: game.id, playerId: player.id, card: cardPlayed};
+                data = {
+                    gameId: game.id,
+                    playerId: player.id,
+                    card: cardPlayed
+                };
 
                 socket.emit( PEvents.PLAY_CARD_RESPONSE, { cardId: cardId } );
 
-                socket.broadcast.to( game.table.id )
-                    .emit( PEvents.NOTIFY_PLAY_CARD, data );
+                socket.broadcast.to( game.getTableObj().id ).
+                    emit( PEvents.NOTIFY_PLAY_CARD, data );
+
             } else {
                 data = { code: 1002, msg: 'Card is not playable' };
 
@@ -116,6 +103,8 @@ io.on('connection', function(socket){
 
     //TODO: handle disconnection
 });
+
+gameServerManager.startServer(io);
 
 /*
 function attachGameHandlers(game){
