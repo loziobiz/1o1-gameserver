@@ -1,0 +1,75 @@
+<section data-ng-controller="gameController">
+
+    <div ng-if="status==='waitinguser'">
+    table: {{table.id}} joined. Waiting one more player to start a new game...
+    </div>
+
+    <div ng-if="status==='readytostart'">
+        table: {{table.id}} holding game {{game.id}}.
+        <br />
+        Your opponent {{game.opponent.nickName}} is <span ng-if="game.opponent.readyToPlay">ready</span> <span ng-if="!game.opponent.readyToPlay">not ready</span>
+        <br />
+        <button ng-click="sendReadyToPLay(game.id)">
+            Start game
+        </button>
+    </div>
+
+    <div ng-if="status==='running'" id="table">
+        <div id="game">
+            <div id="villain" class="player villain plrid02">
+                <div class="cards">
+                    <div ng-repeat="card in oppocards" class="cardcontainer">
+                        <card comboval="{{card.comboValue}}" cardid="{{card.id}}" gameid="{{game.id}}" player="villain"></card>
+                    </div>
+                </div>
+                <div class="picks"></div>
+                <div class="userdata" ng-class="(playerInActionId === game.opponent.id) ? 'turn' : ''">
+                    <p class="nickname">{{game.opponent.nickName}}</p>
+                    <p class="yourturn">Your turn...</p>
+                </div>
+            </div>
+
+            <div id="board">
+                <div id="moves">
+                    <div id="oppomove" class="move"></div>
+                    <div id="heromove" class="move"></div>
+                </div>
+                <div id="score">
+                    <div id="scoretitle">Score</div>
+                    <div id="scoredata">
+                        <div>
+                            <div id="score-nicks">
+                                <div class="score-nick" id="score-nick-hero">{{heronick}}</div>
+                                <div class="score-nick" id="score-nick-oppo">{{opponick}}</div>
+                            </div>
+                            <div ng-repeat="score in roundScores" class="score-points">
+                                <div class="score-point" id="score-point-hero">{{score.hero}}</div>
+                                <div class="score-point" id="score-point-oppo">{{score.oppo}}</div>
+                            </div>
+                            <div id="score-totals">
+                                <div class="score-total" id="score-total-hero">{{totalScores.hero}}</div>
+                                <div class="score-total" id="score-total-oppo">{{totalScores.oppo}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="deck">{{cardsLeft}}</div>
+            </div>
+
+            <div id="hero" class="player hero plrid01">
+                <div class="cards">
+                    <div ng-repeat="card in herocards" class="cardcontainer">
+                        <card comboval="{{card.comboValue}}" cardid="{{card.id}}" gameid="{{game.id}}" player="hero"></card>
+                    </div>
+                </div>
+                <div class="picks"></div>
+                <div class="userdata" ng-class="(playerInActionId === user.id) ? 'turn' : ''">
+                    <p class="nickname">{{user.nickName}}</p>
+                    <p class="yourturn">Your turn...</p>
+                </div>
+            </div>
+        </div>
+        <div style="position: absolute;top:500px">{{cards}}</div>
+    </div>
+
+</section>

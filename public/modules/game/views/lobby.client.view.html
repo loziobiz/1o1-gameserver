@@ -1,0 +1,10 @@
+<section data-ng-controller="lobbyController">
+    <div id="lobby">
+        <div>LOBBY</div>
+        <div ng-repeat="table in room.tables">
+            <span>{{table.config.name}}</span> <span>{{table.status}}</span>
+
+            <a ng-if="table.status==='WAITING' || table.status==='AVAILABLE' " ng-click="joinTable(table.id)">JOIN</a>
+        </div>
+    </div>
+</section>

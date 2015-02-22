@@ -1,0 +1,251 @@
+html, body, #view-container, .view-frame {
+        height:100%;
+}
+
+body { font: 13px Helvetica, Arial; margin: 0}
+
+#log { background: #FFF; padding: 3px; position: fixed; bottom: 0; width: 100%; border: 3px solid black; height: 200px; box-sizing: border-box;
+        overflow: scroll}
+
+.page{ margin: 20px;  display: none }
+
+#loginPage{ display: block }
+
+#joinOkWaiting{  }
+
+#confimGameStart{ }
+
+
+#table{ height:100%; width: 100%; background-image: url(../img/board-green.png); padding-top: 30px;}
+
+.clearLeft{
+        clear: left;
+}
+.master {
+        display: none;
+}
+
+
+.card {
+        width: 57px;
+        height: 95px;
+        border: 1px solid black;
+        border-radius: 7px;
+        float: left;
+        cursor: pointer;
+}
+
+.btnJoin.master{display: none}
+.btnStartPlaying.master{display: none}
+
+.card.hover {
+        border: 1px solid red!important;
+}
+
+.card.test {
+        border-width: 5px!important;
+}
+
+
+.card  > p{
+        line-height: 30px;
+        text-align: center;
+        width: 100%;
+        font-size: 20px;
+}
+
+#game {
+        /* top: 50px; */
+        /* left: 0px; */
+        /* float: left; */
+        width: 830px;
+        border: 2px solid rgb(137, 187, 134);
+        margin: auto;
+        height: 560px;
+        padding: 10px;
+        border-radius: 10px;
+}
+
+.player {
+        float: left;
+        width: 100%;
+        height: 90px;
+}
+
+.player.turn {
+        border: 2px solid red;
+}
+
+.player .nickname.playing {
+        font-weight: bold;
+}
+
+.player .cards{
+        float: left;
+        position: relative;
+}
+
+.player .cards > div.cardcontainer{
+        position: absolute;
+        top:0px;
+
+}
+
+.player .cards div.cardcontainer:nth-child(1) {left: 0px;}
+.player .cards div.cardcontainer:nth-child(2) {left: 58px;}
+.player .cards div.cardcontainer:nth-child(3) {left: 116px;}
+.player .cards div.cardcontainer:nth-child(4) {left: 174px;}
+.player .cards div.cardcontainer:nth-child(5) {left: 232px;}
+.player .cards div.cardcontainer:nth-child(6) {left: 290px;}
+.player .cards div.cardcontainer:nth-child(7) {left: 348px;}
+.player .cards div.cardcontainer:nth-child(8) {left: 406px;}
+.player .cards div.cardcontainer:nth-child(9) {left: 464px;}
+.player .cards div.cardcontainer:nth-child(10) {left: 522px;}
+
+.player .picks{
+        float: right;
+        width: 50px;
+        height: 75px;
+        display: none;
+}
+
+#villain {
+        top: 0px;
+        left: 20px;
+}
+
+#board {
+        /* top: 100px; */
+        /* left: 20px; */
+
+        height: 350px;
+        width: 100%;
+        float: left;
+}
+
+#board #deck{
+        color: #ffff22;
+        text-align: center;
+        font-size: 29px;
+        line-height: 96px;
+        /* position: absolute; */
+        /* top: 55px; */
+        /* right: 20px; */
+        width: 57px;
+        height: 95px;
+        border: 1px solid #000000;
+        border-radius: 7px;
+        /* background-color: #eeeeee; */
+        background-image: url(../img/card-back.png);
+        float: right;
+        margin-top: 120px;
+        margin-right: 30px;
+}
+
+#moves {
+        position: absolute;
+        top: 180px;
+        left: 410px;
+}
+
+.move {
+        width: 57px;
+        height: 95px;
+}
+
+#oppomove {
+        margin: 7px;
+}
+
+#hero {
+
+}
+
+.userdata {
+        text-align: center;
+        float: right;
+        border: 1px solid black;
+        width: 200px;
+        height: 94px;
+}
+
+.userdata.turn {
+        border: 2px solid red;
+}
+
+.userdata.turn > p.yourturn{
+        display: block;
+}
+
+.userdata > p.nickname {
+        color: white;
+        font-size: 20px;
+        background-color: rgba(0,0,0,.3);
+        padding: 5px;
+        font-family: Trebuchet MS;
+}
+
+.userdata > p.yourturn {
+        display: none;
+        color: white;
+        font-size: 16px;
+        background-color: rgba(255,0,0,.5);
+        padding: 5px;
+        font-family: Trebuchet MS;
+}
+
+#score {
+        float: right;
+        width: 220px;
+        height: 200px;
+        border: 1px solid grey;
+        background-color: white;
+        margin-top: 70px;
+        margin-right: 0px;
+        padding: 5px;
+        border-radius: 5px;
+}
+
+#scoretitle {
+        text-align: center;
+        font-family: Trebuchet MS;
+        font-size: 16px;
+        font-weight: bold;
+        text-decoration: underline;
+}
+
+#score-nicks, #score-totals, .score-points {
+        width: 100%;
+        float: left;
+}
+#score-nicks{
+        margin-top: 14px;
+        margin-bottom: 5px;
+}
+#score-totals{
+        margin-top: 10px;
+        border-top: 1px solid grey;
+}
+.score-points{
+        margin-bottom: 5px;
+}
+
+.score-nick, .score-total, .score-point{
+        float: left;
+        width: 50%;
+        text-align: center;
+        font-family: Trebuchet MS;
+        font-size: 14px;
+}
+
+.score-nick{
+        font-weight: bold;
+}
+
+.score-total{
+        padding-top: 6px;
+}
+
+.score-point{
+
+}
